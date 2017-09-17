@@ -1,49 +1,56 @@
 var mysql = require('mysql');
 var faker = require('faker');
 
-// create mySql connection
+// create mySql connection to create Database
 var connection = mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  database: 'bamazon'
+  user: 'root'
 });
 
 // connect to database
 connection.connect(err => {
   if (err) throw err;
   console.log('Connected to database');
-
-  
-  // create database if it doesn't exist
-  connection.query('CREATE DATABASE IF NOT EXISTS bamazon', (err, result) => {
-    if (err) throw err;
-    console.log(result);
-    console.log('Database created');
-  });
-
-
-  // create table if it doesn't exist
-  createTable();
-  // seedData();
-
-  // sql command for supervisor tables
-  createDepartmentTable();
-  insertProductSalesColumn();
+  createDatabase();
 });
 
-function createTable () {
+function createDatabase () {
+  // drop database if it is exist
+  connection.query('DROP DATABASE IF EXISTS bamazon', (err, result) => {
+    if (err) throw err;
+    console.log('Database dropped');
+    // create database - 'if not exists' included if drop database is removed
+    connection.query('CREATE DATABASE IF NOT EXISTS bamazon', (err, result) => {
+      if (err) throw err;
+      console.log('Database created');
+      connection.end((err) => {
+        if (err) throw err;
+        connection = mysql.createConnection({
+          host: 'localhost',
+          user: 'root',
+          database: 'bamazon'
+        });
+        createProductTable();
+      });
+    });
+  });
+}
+
+function createProductTable () {
   var queryString = `CREATE TABLE IF NOT EXISTS products(
     item_id INT(5) AUTO_INCREMENT,
     product_name VARCHAR(100),
     department_name VARCHAR(100),
     price DECIMAL(10,2),
     stock_quantity INT(10),
+    product_sales DECIMAL(20,2) NOT NULL DEFAULT 0,
     PRIMARY KEY(item_id)
-  )`;
-  connection.query(queryString, (err, result) => {
+  );`;
+  var q = connection.query(queryString, (err, result) => {
     if (err) throw err;
-    console.log(result);
-    console.log('Created table');
+    // console.log(result);
+    console.log('Created product table');
+    seedData();
   });
 }
 
@@ -57,15 +64,7 @@ function seedData () {
     item = [productName, department, price, quantity];
     insertNewProduct(item);
   }
-}
-
-function insertNewProduct (dataArray) {
-  console.log('array passed: ', dataArray);
-  var query = connection.query('INSERT INTO products (product_name, department_name, price, stock_quantity) VALUES (?)', [dataArray], (err, results) => {
-    if (err) throw err;
-    console.log('Data added: ', results);
-  });
-  console.log(query.sql);
+  createDepartmentTable();
 }
 
 function createDepartmentTable () {
@@ -77,18 +76,20 @@ function createDepartmentTable () {
   )`;
   connection.query(queryString, (err, result) => {
     if (err) throw err;
-    console.log(result);
+    // console.log(result);
     console.log('Created table');
+    connection.end(err => {
+      if (err) throw err;
+      console.log('Connection ended.');
+    });
   });
 }
 
-function insertProductSalesColumn () {
-  var queryString = `ALTER TABLE products
-    ADD COLUMN product_sales DECIMAL(20,2) NOT NULL;`;
-  var q = connection.query(queryString, (err, result) => {
+function insertNewProduct (dataArray) {
+  // console.log('array passed: ', dataArray);
+  var query = connection.query('INSERT INTO products (product_name, department_name, price, stock_quantity) VALUES (?)', [dataArray], (err, results) => {
     if (err) throw err;
-    console.log(result);
-    console.log('Created table');
+    // console.log('Data added: ', results);
   });
-  // console.log(q.sql);
+  // console.log(query.sql);
 }
