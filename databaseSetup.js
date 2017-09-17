@@ -50,7 +50,7 @@ function createProductTable () {
     if (err) throw err;
     // console.log(result);
     console.log('Created product table');
-    seedData();
+    createDepartmentTable();
   });
 }
 
@@ -63,14 +63,18 @@ function seedData () {
     var quantity = 10;
     item = [productName, department, price, quantity];
     insertNewProduct(item);
+    addDepartment(department);
   }
-  createDepartmentTable();
+  connection.end(err => {
+    if (err) throw err;
+    console.log('Connection ended.');
+  });
 }
 
 function createDepartmentTable () {
   var queryString = `CREATE TABLE IF NOT EXISTS departments(
     department_id INT(5) AUTO_INCREMENT,
-    department_name VARCHAR(100),
+    department_name VARCHAR(100) UNIQUE,
     overheadcosts DECIMAL(10,2),
     PRIMARY KEY(department_id)
   )`;
@@ -78,10 +82,7 @@ function createDepartmentTable () {
     if (err) throw err;
     // console.log(result);
     console.log('Created table');
-    connection.end(err => {
-      if (err) throw err;
-      console.log('Connection ended.');
-    });
+    seedData();
   });
 }
 
@@ -92,4 +93,11 @@ function insertNewProduct (dataArray) {
     // console.log('Data added: ', results);
   });
   // console.log(query.sql);
+}
+
+function addDepartment (department) {
+  connection.query('INSERT IGNORE INTO departments(department_name, overheadcosts) VALUES(?,10000)',
+[department], (err, res) => {
+  // if (err) console.log(err);
+});
 }

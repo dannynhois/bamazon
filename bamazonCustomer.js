@@ -12,7 +12,7 @@ var conn = mysql.createConnection({
 displayAll();
 
 function displayAll () {
-  conn.query('SELECT item_id, product_name, price FROM products', (err, result) => {
+  conn.query('SELECT item_id, product_name, FORMAT(price, \'C\') as price FROM products', (err, result) => {
     if (err) throw err;
     listOfItems = [];
     result.forEach(item => {

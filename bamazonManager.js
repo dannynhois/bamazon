@@ -103,7 +103,7 @@ function promptForAction () {
 }
 
 function showProducts () {
-  conn.query(`SELECT item_id, product_name, price, stock_quantity FROM products`, (err, res) => {
+  conn.query(`SELECT item_id, product_name, FORMAT(price, 'C') as price, stock_quantity FROM products`, (err, res) => {
     if (err) throw err;
     console.table('Products for sale', res);
     promptForAction();
@@ -111,7 +111,7 @@ function showProducts () {
 }
 
 function showLowInventory () {
-  conn.query(`SELECT item_id, product_name, price, stock_quantity FROM products WHERE stock_quantity <=5`, (err, res) => {
+  conn.query(`SELECT item_id, product_name, FORMAT(price, 'C') as price, stock_quantity FROM products WHERE stock_quantity <=5`, (err, res) => {
     if (err) throw err;
     console.table('Low Inventory. Items with 5 or less quantity.', res);
     promptForAction();
@@ -131,7 +131,15 @@ function addProduct (dataArray) {
     if (err) console.log('Unable to add product')
     else {
       console.log('Product added.');
+      addDepartment(dataArray[1]);
       promptForAction();
     }
   });
+}
+
+function addDepartment (department) {
+  conn.query('INSERT IGNORE INTO departments(department_name, overheadcosts) VALUES(?,10000)',
+[department], (err, res) => {
+  // if (err) console.log(err);
+});
 }

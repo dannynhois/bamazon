@@ -17,83 +17,40 @@ function promptForAction () {
       name: 'action',
       choices: [
         'View Product Sales by Department',
-        'Create New Department'
+        'Change Overhead Cost of Department'
       ],
       message: 'Select an action:'
     },
-    // prompts for adding to inventory
     {
       type: 'input',
-      name: 'id',
-      message: 'What is the item_id of the product you want to add inventory to:',
+      name: 'departmentID',
+      message: 'Enter department ID:',
       when: function (answer) {
-        return (answer.action === 'Add to Inventory');
-      },
-      validate: function checkForNumber (count) {
-        return Number.isInteger(parseInt(count));
-      }
-    },
-
-    // prompts for adding new product
-    {
-      type: 'input',
-      name: 'productName',
-      message: 'Enter product name:',
-      when: function (answer) {
-        return (answer.action === 'Add New Product');
+        return (answer.action === 'Change Overhead Cost of Department');
       },
       validate: function checkIsEmpty (input) {
-        return input !== '';
+        return Number.isInteger(parseInt(input));
       }
     },
     {
       type: 'input',
-      name: 'departmentName',
-      message: 'Enter department name:',
+      name: 'cost',
+      message: 'Enter new overhead cost:',
       when: function (answer) {
-        return (answer.action === 'Add New Product');
+        return (answer.action === 'Change Overhead Cost of Department');
       },
       validate: function checkIsEmpty (input) {
-        return input !== '';
-      }
-    },
-    {
-      type: 'input',
-      name: 'price',
-      message: 'Enter price of product:',
-      when: function (answer) {
-        return (answer.action === 'Add New Product');
-      },
-      validate: function checkForNumber (count) {
-        return Number.isInteger(parseInt(count));
-      }
-    },
-    // quantity prompt for both adds
-
-    {
-      type: 'input',
-      name: 'quantity',
-      message: 'How many items do you want to add:',
-      when: function (answer) {
-        return (answer.action === 'Add to Inventory' || answer.action === 'Add New Product');
-      },
-      validate: function checkForNumber (count) {
-        return Number.isInteger(parseInt(count));
+        return Number.isInteger(parseInt(input));
       }
     }
+
   ]).then(response => {
     switch (response.action) {
       case 'View Product Sales by Department':
         showSalesByDepartment();
         break;
-      case 'View Low Inventory':
-        showLowInventory();
-        break;
-      case 'Add to Inventory':
-        addInventory(response.id, response.quantity);
-        break;
-      case 'Add New Product':
-        addProduct([response.productName, response.departmentName, response.price, response.quantity]);
+      case 'Change Overhead Cost of Department':
+        changeOverheadCost(response.departmentID, response.cost);
         break;
       default:
     }
@@ -101,9 +58,33 @@ function promptForAction () {
 }
 
 function showSalesByDepartment () {
-  console.log('here');
-  var sqlQuery = `SELECT department_name, SUM(product_sales) as total_sales FROM products GROUP BY department_name`;
+  var sqlQuery = `SELECT departments.department_id, departments.department_name, FORMAT(departments.overheadcosts,'C') as 'Overhead Cost', FORMAT(SUM(products.product_sales),'C') as 'Total Sales', FORMAT((SUM(products.product_sales) - departments.overheadcosts), 'C') as Profits
+    FROM departments LEFT JOIN products ON departments.department_name = products.department_name
+    GROUP BY departments.department_id;`;
   conn.query(sqlQuery, (err, res) => {
     console.table(res);
+    promptForAction();
   });
+}
+
+function changeOverheadCost (departmentID, cost) {
+  var sqlQuery = `UPDATE departments SET ? WHERE ?`;
+  conn.query(sqlQuery,
+    [
+      {
+        overheadcosts: cost
+      },
+      {
+        department_id: departmentID
+      }
+    ], (err, res) => {
+      // console.log(res);
+      if (err) throw err;
+      if (res.changedRows === 0) {
+        console.log('FAILED to update overhead cost');
+      } else {
+        console.log('SUCCESSFULLY updated overhead cost');
+      }
+      promptForAction();
+    });
 }
