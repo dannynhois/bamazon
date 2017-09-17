@@ -13,18 +13,22 @@ connection.connect(err => {
   if (err) throw err;
   console.log('Connected to database');
 
-  /*
+  
   // create database if it doesn't exist
   connection.query('CREATE DATABASE IF NOT EXISTS bamazon', (err, result) => {
     if (err) throw err;
     console.log(result);
     console.log('Database created');
   });
-  */
+
 
   // create table if it doesn't exist
   createTable();
-  seedData();
+  // seedData();
+
+  // sql command for supervisor tables
+  createDepartmentTable();
+  insertProductSalesColumn();
 });
 
 function createTable () {
@@ -62,4 +66,29 @@ function insertNewProduct (dataArray) {
     console.log('Data added: ', results);
   });
   console.log(query.sql);
+}
+
+function createDepartmentTable () {
+  var queryString = `CREATE TABLE IF NOT EXISTS departments(
+    department_id INT(5) AUTO_INCREMENT,
+    department_name VARCHAR(100),
+    overheadcosts DECIMAL(10,2),
+    PRIMARY KEY(department_id)
+  )`;
+  connection.query(queryString, (err, result) => {
+    if (err) throw err;
+    console.log(result);
+    console.log('Created table');
+  });
+}
+
+function insertProductSalesColumn () {
+  var queryString = `ALTER TABLE products
+    ADD COLUMN product_sales DECIMAL(20,2) NOT NULL;`;
+  var q = connection.query(queryString, (err, result) => {
+    if (err) throw err;
+    console.log(result);
+    console.log('Created table');
+  });
+  // console.log(q.sql);
 }
