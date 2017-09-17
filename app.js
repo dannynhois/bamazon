@@ -49,7 +49,7 @@ function seedData () {
     var productName = faker.commerce.productName();
     var department = faker.commerce.department();
     var price = faker.commerce.price();
-    var quantity = faker.random.number();
+    var quantity = 10;
     item = [productName, department, price, quantity];
     insertNewProduct(item);
   }
